@@ -1,0 +1,2 @@
+# AI-Powered-Braille-Script-Recognition-and-Speech-Conversion-Web-Application
+This project focuses on building an assistive technology solution for visually impaired individuals. It uses Artificial Intelligence (AI) to recognize Braille script through image processing and converts it into readable text. The recognized text is then transformed into speech output using text-to-speech (TTS) technology. 
