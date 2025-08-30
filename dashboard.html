@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Braille Analysis Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6C63FF;
+            --secondary: #FF6584;
+            --dark: #2D3748;
+            --light: #F7FAFC;
+            --accent: #48BB78;
+            --text: #4A5568;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--dark);
+            color: var(--light);
+            overflow-x: hidden;
+            line-height: 1.6;
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: clamp(10px, 2.5vw, 20px);
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: clamp(10px, 2.5vw, 20px) 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: clamp(15px, 3.5vw, 30px);
+        }
+
+        .dashboard-title {
+            font-size: clamp(1.3rem, 4.5vw, 2rem);
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: clamp(6px, 1.5vw, 10px);
+        }
+
+        .username {
+            font-weight: 600;
+            font-size: clamp(0.8rem, 2.5vw, 1rem);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: clamp(15px, 3.5vw, 30px);
+        }
+
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: clamp(10px, 2.5vw, 25px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-title {
+            font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+            margin-bottom: clamp(10px, 2.5vw, 20px);
+            color: var(--primary);
+        }
+
+        .file-upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: clamp(15px, 3.5vw, 30px);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: clamp(10px, 2.5vw, 20px);
+            touch-action: manipulation;
+        }
+
+        .file-upload-area:active {
+            border-color: var(--primary);
+            background: rgba(108, 99, 255, 0.05);
+        }
+
+        .upload-icon {
+            font-size: clamp(1.5rem, 5vw, 3rem);
+            color: var(--primary);
+            margin-bottom: clamp(8px, 2vw, 15px);
+        }
+
+        .file-upload-area p {
+            font-size: clamp(0.7rem, 2vw, 0.9rem);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-info {
+            margin-top: clamp(10px, 2.5vw, 20px);
+            padding: clamp(8px, 2vw, 15px);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            display: none;
+        }
+
+        .file-info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .file-info-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+        }
+
+        .file-info-value {
+            font-weight: 600;
+            font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: clamp(8px, 2vw, 12px) clamp(15px, 3.5vw, 30px);
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(108, 99, 255, 0.3);
+            font-size: clamp(0.8rem, 2.5vw, 1rem);
+            touch-action: manipulation;
+        }
+
+        .btn:active {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(108, 99, 255, 0.2);
+        }
+
+        .btn:disabled {
+            background: gray;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .language-select {
+            width: 100%;
+            padding: clamp(8px, 2vw, 12px);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            margin-bottom: clamp(10px, 2.5vw, 20px);
+            font-family: 'Poppins', sans-serif;
+            font-size: clamp(0.7rem, 2vw, 0.9rem);
+            -webkit-appearance: none;
+        }
+
+        .language-select-label {
+            font-size: clamp(0.7rem, 2vw, 0.9rem);
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .result-area {
+            min-height: 120px;
+            max-height: 350px;
+            overflow-y: auto;
+            padding: clamp(8px, 2vw, 15px);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-size: clamp(0.7rem, 2vw, 0.9rem);
+        }
+
+        .result-title {
+            margin-bottom: 10px;
+            color: var(--accent);
+            font-size: clamp(0.8rem, 2.5vw, 1rem);
+        }
+
+        .tone-analysis {
+            margin-top: clamp(10px, 2.5vw, 20px);
+        }
+
+        .tone-analysis ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .tone-analysis li {
+            padding: clamp(6px, 1.5vw, 10px);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: clamp(0.7rem, 2vw, 0.9rem);
+        }
+
+        .alert {
+            padding: clamp(8px, 2vw, 15px);
+            border-radius: 8px;
+            margin-bottom: clamp(10px, 2.5vw, 20px);
+            display: none;
+            font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+        }
+
+        .alert-success {
+            background: rgba(72, 187, 120, 0.2);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .alert-error {
+            background: rgba(255, 101, 132, 0.2);
+            border: 1px solid var(--secondary);
+            color: var(--secondary);
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--secondary);
+            cursor: pointer;
+            font-size: clamp(0.7rem, 2vw, 0.9rem);
+            touch-action: manipulation;
+        }
+
+        .logout-btn:active {
+            text-decoration: underline;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin: clamp(10px, 2.5vw, 20px) 0;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 10px;
+            border-radius: 10px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        #listen-btn, #tone-btn {
+            background: var(--accent);
+            margin-top: clamp(8px, 2vw, 15px);
+            transition: all 0.3s ease;
+        }
+
+        #listen-btn:active, #tone-btn:active {
+            background: #3aa76d;
+            transform: translateY(-2px);
+        }
+
+        #listen-btn:disabled, #tone-btn:disabled {
+            background: #6ee7b7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin-bottom: clamp(8px, 2vw, 15px);
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .image-error {
+            color: var(--secondary);
+            font-size: clamp(0.7rem, 2vw, 0.9rem);
+            text-align: center;
+            margin-bottom: clamp(8px, 2vw, 15px);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: clamp(8px, 2vw, 15px);
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: clamp(8px, 2vw, 15px) 0;
+                margin-bottom: clamp(10px, 2.5vw, 20px);
+            }
+
+            .dashboard-title {
+                font-size: clamp(1.2rem, 4vw, 1.8rem);
+                margin-bottom: 10px;
+            }
+
+            .user-info {
+                gap: clamp(5px, 1.2vw, 8px);
+            }
+
+            .username {
+                font-size: clamp(0.7rem, 2.2vw, 0.9rem);
+            }
+
+            .logout-btn {
+                font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+            }
+
+            .dashboard-card {
+                padding: clamp(8px, 2vw, 20px);
+            }
+
+            .card-title {
+                font-size: clamp(1rem, 3.2vw, 1.3rem);
+                margin-bottom: clamp(8px, 2vw, 15px);
+            }
+
+            .file-upload-area {
+                padding: clamp(10px, 2.5vw, 20px);
+                margin-bottom: clamp(8px, 2vw, 15px);
+            }
+
+            .upload-icon {
+                font-size: clamp(1.3rem, 4.5vw, 2.5rem);
+                margin-bottom: clamp(6px, 1.5vw, 10px);
+            }
+
+            .file-upload-area p {
+                font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+            }
+
+            .file-info {
+                margin-top: clamp(8px, 2vw, 15px);
+                padding: clamp(6px, 1.5vw, 10px);
+            }
+
+            .btn {
+                padding: clamp(6px, 1.5vw, 10px) clamp(10px, 2.5vw, 20px);
+                font-size: clamp(0.7rem, 2.2vw, 0.9rem);
+            }
+
+            .language-select {
+                padding: clamp(6px, 1.5vw, 10px);
+                margin-bottom: clamp(8px, 2vw, 15px);
+                font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+            }
+
+            .language-select-label {
+                font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+            }
+
+            .result-area {
+                min-height: 100px;
+                max-height: 300px;
+                padding: clamp(6px, 1.5vw, 10px);
+                font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+            }
+
+            .result-title {
+                font-size: clamp(0.7rem, 2.2vw, 0.9rem);
+            }
+
+            .alert {
+                padding: clamp(6px, 1.5vw, 10px);
+                margin-bottom: clamp(8px, 2vw, 15px);
+                font-size: clamp(0.5rem, 1.5vw, 0.7rem);
+            }
+
+            .tone-analysis li {
+                font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+            }
+
+            .image-preview {
+                max-height: 250px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: clamp(6px, 1.5vw, 10px);
+            }
+
+            .dashboard-header {
+                padding: clamp(6px, 1.5vw, 10px) 0;
+                margin-bottom: clamp(8px, 2vw, 15px);
+            }
+
+            .dashboard-title {
+                font-size: clamp(1rem, 3.5vw, 1.5rem);
+            }
+
+            .user-info {
+                gap: clamp(4px, 1vw, 6px);
+            }
+
+            .username {
+                font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+            }
+
+            .logout-btn {
+                font-size: clamp(0.5rem, 1.5vw, 0.7rem);
+            }
+
+            .dashboard-card {
+                padding: clamp(6px, 1.5vw, 15px);
+            }
+
+            .card-title {
+                font-size: clamp(0.8rem, 2.8vw, 1.2rem);
+                margin-bottom: clamp(6px, 1.5vw, 10px);
+            }
+
+            .file-upload-area {
+                padding: clamp(8px, 2vw, 15px);
+                margin-bottom: clamp(6px, 1.5vw, 10px);
+            }
+
+            .upload-icon {
+                font-size: clamp(1rem, 3.5vw, 2rem);
+                margin-bottom: clamp(5px, 1.2vw, 8px);
+            }
+
+            .file-upload-area p {
+                font-size: clamp(0.5rem, 1.5vw, 0.7rem);
+            }
+
+            .file-info {
+                margin-top: clamp(6px, 1.5vw, 10px);
+                padding: clamp(5px, 1.2vw, 8px);
+            }
+
+            .file-info-label,
+            .file-info-value {
+                font-size: clamp(0.5rem, 1.5vw, 0.7rem);
+            }
+
+            .btn {
+                padding: clamp(5px, 1.2vw, 8px) clamp(8px, 2vw, 15px);
+                font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+            }
+
+            .language-select {
+                padding: clamp(5px, 1.2vw, 8px);
+                margin-bottom: clamp(6px, 1.5vw, 10px);
+                font-size: clamp(0.5rem, 1.5vw, 0.7rem);
+            }
+
+            .language-select-label {
+                font-size: clamp(0.5rem, 1.5vw, 0.7rem);
+            }
+
+            .result-area {
+                min-height: 80px;
+                max-height: 250px;
+                padding: clamp(5px, 1.2vw, 8px);
+                font-size: clamp(0.5rem, 1.5vw, 0.7rem);
+            }
+
+            .result-title {
+                font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+            }
+
+            .alert {
+                padding: clamp(5px, 1.2vw, 8px);
+                margin-bottom: clamp(6px, 1.2vw, 10px);
+                font-size: clamp(0.4rem, 1.2vw, 0.6rem);
+            }
+
+            .tone-analysis li {
+                font-size: clamp(0.5rem, 1.5vw, 0.7rem);
+            }
+
+            #listen-btn, #tone-btn {
+                margin-top: clamp(6px, 1.5vw, 10px);
+            }
+
+            .image-preview {
+                max-height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">Braille Analysis Dashboard</h1>
+            <div class="user-info">
+                <span class="username">Welcome, {{ username | default('User') }}</span>
+                <button class="logout-btn" onclick="window.location.href='/logout'" aria-label="Logout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'success' if category == 'success' else 'error' }}" id="flash-message">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="dashboard-grid">
+            <!-- File Upload Section -->
+            <div class="dashboard-card">
+                <h2 class="card-title">Upload Braille Document or Image</h2>
+                <form id="upload-form" action="/upload" method="POST" enctype="multipart/form-data">
+                    <div class="file-upload-area" id="drop-area" role="button" aria-label="Drag and drop or click to upload a file">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <p>Drag & drop your file here or click to browse (TXT, DOC, DOCX)</p>
+                        <input type="file" name="file" id="file-input" class="file-input" accept=".txt,.doc,.docx," required aria-label="File input for uploading documents">
+                    </div>
+
+                    <div class="file-info" id="file-info">
+                        <div class="file-info-item">
+                            <span class="file-info-label">File Name:</span>
+                            <span class="file-info-value" id="file-name">-</span>
+                        </div>
+                        <div class="file-info-item">
+                            <span class="file-info-label">File Size:</span>
+                            <span class="file-info-value" id="file-size">-</span>
+                        </div>
+                        <div class="file-info-item">
+                            <span class="file-info-label">File Type:</span>
+                            <span class="file-info-value" id="file-type">-</span>
+                        </div>
+                    </div>
+
+                    <div class="progress-container" id="progress-container">
+                        <div class="progress-bar" id="progress-bar"></div>
+                    </div>
+
+                    <label for="language" class="language-select-label">Translation Language:</label>
+                    <select name="language" id="language" class="language-select" aria-label="Select translation language">
+                        <option value="en" {% if language == 'en' %}selected{% endif %}>English</option>
+                        <option value="es" {% if language == 'es' %}selected{% endif %}>Spanish</option>
+                        <option value="fr" {% if language == 'fr' %}selected{% endif %}>French</option>
+                        <option value="de" {% if language == 'de' %}selected{% endif %}>German</option>
+                        <option value="it" {% if language == 'it' %}selected{% endif %}>Italian</option>
+                        <option value="pt" {% if language == 'pt' %}selected{% endif %}>Portuguese</option>
+                        <option value="ru" {% if language == 'ru' %}selected{% endif %}>Russian</option>
+                        <option value="zh" {% if language == 'zh' %}selected{% endif %}>Chinese</option>
+                        <option value="ja" {% if language == 'ja' %}selected{% endif %}>Japanese</option>
+                        <option value="ar" {% if language == 'ar' %}selected{% endif %}>Arabic</option>
+                        <option value="hi" {% if language == 'hi' %}selected{% endif %}>Hindi</option>
+                        <option value="bn" {% if language == 'bn' %}selected{% endif %}>Bengali</option>
+                        <option value="ta" {% if language == 'ta' %}selected{% endif %}>Tamil</option>
+                        <option value="te" {% if language == 'te' %}selected{% endif %}>Telugu</option>
+                        <option value="mr" {% if language == 'mr' %}selected{% endif %}>Marathi</option>
+                        <option value="ur" {% if language == 'ur' %}selected{% endif %}>Urdu</option>
+                        <option value="gu" {% if language == 'gu' %}selected{% endif %}>Gujarati</option>
+                        <option value="kn" {% if language == 'kn' %}selected{% endif %}>Kannada</option>
+                        <option value="ml" {% if language == 'ml' %}selected{% endif %}>Malayalam</option>
+                        <option value="pa" {% if language == 'pa' %}selected{% endif %}>Punjabi</option>
+                        <option value="or" {% if language == 'or' %}selected{% endif %}>Odia</option>
+                        <option value="as" {% if language == 'as' %}selected{% endif %}>Assamese</option>
+                        <option value="nl" {% if language == 'nl' %}selected{% endif %}>Dutch</option>
+                        <option value="sv" {% if language == 'sv' %}selected{% endif %}>Swedish</option>
+                        <option value="pl" {% if language == 'pl' %}selected{% endif %}>Polish</option>
+                        <option value="tr" {% if language == 'tr' %}selected{% endif %}>Turkish</option>
+                        <option value="ko" {% if language == 'ko' %}selected{% endif %}>Korean</option>
+                    </select>
+                    <button type="submit" class="btn" id="submit-btn" disabled aria-label="Process uploaded document or image">Process Document/Image</button>
+                </form>
+            </div>
+
+            <!-- Results Section -->
+            <div class="dashboard-card">
+                <h2 class="card-title">Analysis Results</h2>
+
+                {% if is_image and uploaded_image %}
+                    <!-- Image Analysis -->
+                    <h3 class="result-title">Uploaded Image:</h3>
+                    {% if uploaded_image %}
+                        <img src="{{ url_for('serve_image', filename=uploaded_image) }}" class="image-preview" alt="Uploaded image for analysis" onerror="this.style.display='none';document.getElementById('image-error').style.display='block';">
+                        <div id="image-error" class="image-error" style="display: none;">Failed to load image. Please try uploading again.</div>
+                    {% else %}
+                        <div class="image-error">No image available. Please upload an image.</div>
+                    {% endif %}
+                    <h3 class="result-title">Image Analysis ({{ language|upper }}):</h3>
+                    <div class="result-area" id="translated-text">
+                        {{ translated_text | safe }}
+                    </div>
+                    <button id="listen-btn" class="btn" aria-label="Listen to image analysis">
+                        <i class="fas fa-volume-up"></i> Listen to Analysis
+                    </button>
+                    <button id="tone-btn" class="btn" onclick="window.location.href='/tone_analysis'" aria-label="Analyze tone of image analysis">
+                        <i class="fas fa-chart-line"></i> Analyze Tone
+                    </button>
+                {% elif original_text and not is_image %}
+                    <!-- Document Analysis -->
+                    <h3 class="result-title">Original Braille Content:</h3>
+                    <div class="result-area" id="original-text">
+                        {{ original_text | safe }}
+                    </div>
+                    <h3 class="result-title">Translated Content ({{ language|upper }}):</h3>
+                    <div class="result-area" id="translated-text">
+                        {{ translated_text | safe }}
+                    </div>
+                    <button id="listen-btn" class="btn" aria-label="Listen to translated text">
+                        <i class="fas fa-volume-up"></i> Listen to Translation
+                    </button>
+                    <button id="tone-btn" class="btn" onclick="window.location.href='/tone_analysis'" aria-label="Analyze tone of translated text">
+                        <i class="fas fa-chart-line"></i> Analyze Tone
+                    </button>
+                {% else %}
+                    <!-- Placeholder when no content is uploaded -->
+                    <div class="result-area" style="display: flex; justify-content: center; align-items: center; color: rgba(255,255,255,0.5);">
+                        <p>Upload and process a Braille document or image to see results</p>
+                    </div>
+                {% endif %}
+
+                {% if tone_points %}
+                    <!-- Tone Analysis (shown for both image and document if available) -->
+                    <div class="tone-analysis">
+                        <h3 class="result-title">Tone Analysis:</h3>
+                        <ul>
+                            {% for point in tone_points %}
+                                <li>{{ point }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Show flash message and then fade out after 5 seconds
+        const flashMessages = document.querySelectorAll('#flash-message');
+        flashMessages.forEach(flashMessage => {
+            if (flashMessage) {
+                flashMessage.style.display = 'block';
+                setTimeout(() => {
+                    flashMessage.style.opacity = '1';
+                    setTimeout(() => {
+                        flashMessage.style.transition = 'opacity 1s ease';
+                        flashMessage.style.opacity = '0';
+                        setTimeout(() => {
+                            flashMessage.style.display = 'none';
+                        }, 1000);
+                    }, 5000);
+                }, 100);
+            }
+        });
+
+        // File upload handling
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const fileInfo = document.getElementById('file-info');
+        const fileName = document.getElementById('file-name');
+        const fileSize = document.getElementById('file-size');
+        const fileType = document.getElementById('file-type');
+        const submitBtn = document.getElementById('submit-btn');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const uploadForm = document.getElementById('upload-form');
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Highlight drop area when item is dragged over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            dropArea.style.borderColor = '#6C63FF';
+            dropArea.style.backgroundColor = 'rgba(108, 99, 255, 0.1)';
+        }
+
+        function unhighlight() {
+            dropArea.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+            dropArea.style.backgroundColor = 'transparent';
+        }
+
+        // Handle dropped files
+        dropArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length) {
+                fileInput.files = files;
+                handleFiles(files);
+            }
+        }
+
+        // Handle selected files
+        dropArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', function() {
+            if (this.files.length) {
+                handleFiles(this.files);
+            }
+        });
+
+        function handleFiles(files) {
+            const file = files[0];
+            const validExtensions = ['.pdf', '.txt', '.doc', '.docx', '.png', '.jpg', '.jpeg'];
+            const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+
+            // Check if file is one of the supported types
+            if (!validExtensions.includes(fileExtension)) {
+                showError('Please upload a supported file type (PDF, TXT, DOC, DOCX, PNG, JPG, JPEG)');
+                return;
+            }
+
+            // Check file size (5MB limit as per app.config)
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSize) {
+                showError('File size exceeds 5MB limit');
+                return;
+            }
+
+            // Display file info
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileType.textContent = getFileTypeFromExtension(fileExtension);
+
+            fileInfo.style.display = 'block';
+            submitBtn.disabled = false;
+        }
+
+        function getFileTypeFromExtension(ext) {
+            const types = {
+                '.pdf': 'PDF Document',
+                '.txt': 'Text File',
+                '.doc': 'Word Document',
+                '.docx': 'Word Document',
+                '.png': 'PNG Image',
+                '.jpg': 'JPEG Image',
+                '.jpeg': 'JPEG Image'
+            };
+            return types[ext] || 'Unknown file type';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-error';
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            dropArea.parentNode.insertBefore(errorDiv, dropArea.nextSibling);
+            setTimeout(() => {
+                errorDiv.style.transition = 'opacity 1s ease';
+                errorDiv.style.opacity = '0';
+                setTimeout(() => {
+                    errorDiv.remove();
+                }, 1000);
+            }, 5000);
+        }
+
+        // Form submission with progress tracking
+        uploadForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const xhr = new XMLHttpRequest();
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    progressBar.style.width = percentComplete + '%';
+                }
+            });
+            xhr.addEventListener('load', function() {
+                if (xhr.status === 200) {
+                    window.location.href = '/dashboard';
+                } else {
+                    showError('Error processing file: ' + xhr.responseText);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Process Document/Image';
+                    progressContainer.style.display = 'none';
+                }
+            });
+            xhr.addEventListener('error', function() {
+                showError('Error uploading file. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Process Document/Image';
+                progressContainer.style.display = 'none';
+            });
+            xhr.open('POST', '/upload', true);
+            xhr.send(formData);
+        });
+
+        // Text-to-Speech Functionality
+        const listenBtn = document.getElementById('listen-btn');
+        const translatedText = document.getElementById('translated-text');
+
+        if (listenBtn) {
+            listenBtn.addEventListener('click', speakTranslatedText);
+        }
+
+        function speakTranslatedText() {
+            if (!translatedText || !translatedText.textContent.trim()) {
+                showError('No translated text available to read.');
+                return;
+            }
+
+            const langCode = document.getElementById('language').value;
+
+            // Check if an audio file is available (for non-English languages)
+            const audioFile = "{{ audio_file | default('') }}";
+            if (audioFile && langCode !== 'en') {
+                const audio = new Audio('/serve_audio/' + audioFile);
+                listenBtn.innerHTML = '<i class="fas fa-volume-up"></i> Speaking...';
+                listenBtn.disabled = true;
+
+                audio.addEventListener('ended', function() {
+                    listenBtn.innerHTML = '<i class="fas fa-volume-up"></i> {% if is_image %}Listen to Analysis{% else %}Listen to Translation{% endif %}';
+                    listenBtn.disabled = false;
+                });
+
+                audio.addEventListener('error', function() {
+                    showError('Error playing audio. Please try again.');
+                    listenBtn.innerHTML = '<i class="fas fa-volume-up"></i> {% if is_image %}Listen to Analysis{% else %}Listen to Translation{% endif %}';
+                    listenBtn.disabled = false;
+                });
+
+                audio.play().catch(error => {
+                    console.error('Audio playback error:', error);
+                    showError('Error playing audio. Please try again.');
+                    listenBtn.innerHTML = '<i class="fas fa-volume-up"></i> {% if is_image %}Listen to Analysis{% else %}Listen to Translation{% endif %}';
+                    listenBtn.disabled = false;
+                });
+                return;
+            }
+
+            // Fallback to SpeechSynthesis for English or if no audio file
+            if (!window.speechSynthesis) {
+                showError('Text-to-speech is not supported in your browser.');
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance(translatedText.textContent);
+            utterance.lang = 'en'; // Default to English for SpeechSynthesis
+            utterance.rate = 0.9;
+
+            const voices = window.speechSynthesis.getVoices();
+            const preferredVoice = voices.find(voice =>
+                voice.lang.startsWith('en') ||
+                voice.lang.replace(/-.*/, '') === 'en'
+            );
+
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            }
+
+            listenBtn.innerHTML = '<i class="fas fa-volume-up"></i> Speaking...';
+            listenBtn.disabled = true;
+
+            utterance.onend = function() {
+                listenBtn.innerHTML = '<i class="fas fa-volume-up"></i> {% if is_image %}Listen to Analysis{% else %}Listen to Translation{% endif %}';
+                listenBtn.disabled = false;
+            };
+
+            utterance.onerror = function(event) {
+                console.error('SpeechSynthesis error:', event);
+                showError('Error reading text. Please try again.');
+                listenBtn.innerHTML = '<i class="fas fa-volume-up"></i> {% if is_image %}Listen to Analysis{% else %}Listen to Translation{% endif %}';
+                listenBtn.disabled = false;
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Load voices when they become available
+        if (window.speechSynthesis) {
+            window.speechSynthesis.onvoiceschanged = function() {
+                // Voices are now loaded
+            };
+        }
+    </script>
+</body>
+</html>
